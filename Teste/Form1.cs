@@ -1,65 +1,100 @@
 using Newtonsoft.Json;
+using NLog;
 using System.Configuration;
-using Teste.Models;
 using Teste.Servico;
-using static System.Net.WebRequestMethods;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Teste
 {
     public partial class Form1 : Form
     {
+        readonly Logger _logger;
         List<string> lista = null;
-
+       
         public Form1()
         {
-            InitializeComponent();            
+            InitializeComponent();
+            _logger = LogManager.GetLogger("");
+            Control.CheckForIllegalCrossThreadCalls = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            listView1.View = View.Details;
+            
+            _logger.Info("Disparando a thread");          
+            var threadMonitora = new Thread(Monitora);
+            threadMonitora.Start();
+        }
+
+        public void Monitora()
+        {
             try
             {
-                ServiceArquivo _ServiceArquivo = new ServiceArquivo();
+                ServiceArquivo _ServiceArquivo = new ServiceArquivo(_logger);
                 lista = _ServiceArquivo.Execute().Result;
 
-                foreach (string s in lista)
+                if (lista !=null && lista.Count > 0)
                 {
-                    ListViewItem item = new ListViewItem();
-                    item.Text = s;
-                    listView1.Items.Add(item);
+                    listView1.View = View.Details;
+                    _logger.Info("Adicionando items na listview.");
+
+                    if (!listView1.InvokeRequired)
+                    {
+                        foreach (string s in lista)
+                        {
+                            ListViewItem item = new ListViewItem();
+                            item.Text = s;
+                            listView1.Items.Add(item);
+                        }
+                    } 
                 }
+                else
+                {
+                    _logger.Info("Lista vazia.");
+                }
+ 
             }
             catch (Exception)
             {
-                throw;
+                _logger.Info("inicio da leitura do arquivo.");
             }
-  
-        }
+        } 
 
         private async void listView1_DoubleClick(object sender, EventArgs e)
         {
-            if (lista != null && lista.Count > 0)
+            try
             {
-                string UrlAPI = ConfigurationManager.AppSettings.Get("UrlAPI");
-
-                var result = JsonConvert.SerializeObject(lista);
-
-                string sParametro = string.Format("linhas={0}", result);
-
-                string sUrl = String.Format("{0}?{1}", UrlAPI, sParametro);
-
-                using (var client = new HttpClient())
+                if (lista != null && lista.Count > 0)
                 {
-                    using (var response = await client.GetAsync(sUrl))
+                    _logger.Info("envio do arquivo para a API.");
+
+                    string UrlAPI = ConfigurationManager.AppSettings.Get("UrlAPI");
+
+                    var result = JsonConvert.SerializeObject(lista);
+
+                    string sParametro = string.Format("linhas={0}", result);
+
+                    string sUrl = String.Format("{0}?{1}", UrlAPI, sParametro);
+
+                    using (var client = new HttpClient())
                     {
-                        if (response.IsSuccessStatusCode)
+                        using (var response = await client.GetAsync(sUrl))
                         {
-                            MessageBox.Show(await response.Content.ReadAsStringAsync());
+                            if (response.IsSuccessStatusCode)
+                            {
+                                _logger.Info("retorno de sucesso da API.");
+                                MessageBox.Show(await response.Content.ReadAsStringAsync());
+                            }    
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.Info(ex.Message);
+            }
+ 
         }
     }
 }

@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teste", "Teste\Teste.csproj", "{15405029-78C9-42C5-9F40-441DC28FD987}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Teste", "Teste\Teste.csproj", "{15405029-78C9-42C5-9F40-441DC28FD987}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTesteAPI", "WebTesteAPI\WebTesteAPI.csproj", "{BEB5F053-AFC8-48E6-AE05-6B000FB939A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebTesteAPI", "WebTesteAPI\WebTesteAPI.csproj", "{BEB5F053-AFC8-48E6-AE05-6B000FB939A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebTesteAPITest", "WebTesteAPITest\WebTesteAPITest.csproj", "{02513328-6242-4357-8026-8E462E2C1319}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{BEB5F053-AFC8-48E6-AE05-6B000FB939A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEB5F053-AFC8-48E6-AE05-6B000FB939A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEB5F053-AFC8-48E6-AE05-6B000FB939A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02513328-6242-4357-8026-8E462E2C1319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02513328-6242-4357-8026-8E462E2C1319}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02513328-6242-4357-8026-8E462E2C1319}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02513328-6242-4357-8026-8E462E2C1319}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,65 +1,87 @@
 ﻿
-using System.Collections.Generic;
+using NLog;
 using System.Configuration;
 using Teste.Interface;
 using Teste.Models;
+using CsvHelper;
+using CsvHelper.Configuration;
+using System.Globalization;
 
 namespace Teste.Repositories
 {
     public class RepositoryArquivo : IRepositoryArquivo
     {
-        private readonly string strNomeArquivo;
+        private readonly string strPath =string.Empty;
         ModelLine modelLine;
         List<string> lRetorno;
+        private readonly Logger _logger;
 
-        public RepositoryArquivo()
+        public RepositoryArquivo(Logger logger)
         {
-            strNomeArquivo = ConfigurationManager.AppSettings.Get("NomeArquivo");
-            modelLine = new ModelLine();
+            strPath = ConfigurationManager.AppSettings.Get("Path");
+            modelLine = new ModelLine();  
+            _logger = logger;
         }
 
         public async Task<List<string>> AsyncLerArquivo()
         {
-            if (!File.Exists(strNomeArquivo))
-            {
-                return null;            }
-
-            
-            modelLine.ListA = new List<string>();
-            modelLine.ListB = new List<string>();
-
             try
             {
-                using (var reader = new StreamReader(strNomeArquivo))
+                modelLine.ListA = new List<string>();
+                modelLine.ListB = new List<string>();
+
+                string[] arrFiles = Directory.GetFiles(strPath, "*.csv");
+                if (arrFiles.Length > 0)
                 {
-
-                    while (!reader.EndOfStream)
+                    var csvconfig = new CsvConfiguration(CultureInfo.CurrentCulture)
                     {
-                        var line = reader.ReadLine();
-                        var values = line.Split(';');
+                        HasHeaderRecord = false,
+                        Delimiter = ";",
+                    };
 
-                        if (values.Length > 0)
+                    _logger.Info("inicio da leitura do(s) arquivo(s).");
+
+                    foreach (var sFile in arrFiles)
+                    {
+                        _logger.Info(string.Format("leitura do arquivo: {0}", sFile));
+                        using var streamReader = File.OpenText(sFile);
+                        using var csvreader = new CsvReader(streamReader, csvconfig);
+
+                        while (csvreader.Read())
                         {
-                            if (int.TryParse(values[0], out int a))
+                            var ColA = csvreader.GetField(0);
+                            var ColB = csvreader.GetField(1);
+
+                            if (!string.IsNullOrEmpty(ColA) && int.TryParse(ColA, out int a))
                             {
-                                modelLine.ListA.Add(values[0]);
+                                modelLine.ListA.Add(ColA);
                             }
-                            if (int.TryParse(values[1], out int b))
+
+                            if (!string.IsNullOrEmpty(ColB) && int.TryParse(ColB, out int b))
                             {
-                                modelLine.ListB.Add(values[1]);
+                                modelLine.ListA.Add(ColB);
                             }
-                        }
+                        } 
                     }
 
-                    await Task.WhenAll(AsyncListA(), AsyncListB());                 
-                }               
+                    _logger.Info("fim da leitura do(s) arquivo(s).");
+                    _logger.Info("disparando as threads.");
 
-                return (await Task.FromResult(lRetorno));
+                    await Task.WhenAll(AsyncListA(), AsyncListB());
+
+                    return (await Task.FromResult(lRetorno));
+                } 
+                else
+                {
+                    _logger.Info("não há arquivo .csv no diretório.");
+                    return null;
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.Info(ex.Message);
                 return null;
-            }
+            }  
         }
 
         public Task AsyncListA()
