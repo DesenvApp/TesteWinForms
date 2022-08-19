@@ -11,7 +11,9 @@ namespace Teste
     {
         readonly Logger _logger;
         List<string> lista = null;
-       
+
+        public delegate void AddItemDelegate(ListViewItem item);        
+
         public Form1()
         {
             InitializeComponent();
@@ -20,11 +22,24 @@ namespace Teste
         }
 
         private void Form1_Load(object sender, EventArgs e)
-        {
-            
+        {          
             _logger.Info("Disparando a thread");          
             var threadMonitora = new Thread(Monitora);
             threadMonitora.Start();
+        }
+
+        public void AddItem(ListViewItem item)
+        {
+            
+            if (!listView1.InvokeRequired)
+            {
+                listView1.Items.Add(item);
+            }
+            else
+            {
+                var d = new AddItemDelegate(AddItem);
+                 listView1.Invoke(d);
+            }
         }
 
         public void Monitora()
@@ -39,15 +54,13 @@ namespace Teste
                     listView1.View = View.Details;
                     _logger.Info("Adicionando items na listview.");
 
-                    if (!listView1.InvokeRequired)
+                    foreach (string s in lista)
                     {
-                        foreach (string s in lista)
-                        {
-                            ListViewItem item = new ListViewItem();
-                            item.Text = s;
-                            listView1.Items.Add(item);
-                        }
-                    } 
+                        ListViewItem item = new ListViewItem();
+                        item.Text = s;
+                        //listView1.Items.Add(item);
+                        AddItem(item);
+                    }   
                 }
                 else
                 {
@@ -55,9 +68,9 @@ namespace Teste
                 }
  
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.Info("inicio da leitura do arquivo.");
+                _logger.Info(ex.Message);
             }
         } 
 
