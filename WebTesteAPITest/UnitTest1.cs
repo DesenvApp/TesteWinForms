@@ -2,18 +2,19 @@
 using Newtonsoft.Json;
 using System.Reflection;
 using WebTesteAPI.Controllers;
-using NLog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Microsoft.Extensions.Logging;
 
 namespace WebTesteAPITest
 {
     [TestClass]
     public class UnitTest1
     {
+        private readonly ILogger<ArquivoController> _logger;
+
         [TestMethod]
         public void TestMethod1()
-        {
-            Logger _logger = LogManager.GetLogger("");
-
+        {         
             var lista = getLista();
 
             var result = JsonConvert.SerializeObject(lista);

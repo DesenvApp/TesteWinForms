@@ -6,6 +6,8 @@ using Teste.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Microsoft.Extensions.Logging;
 
 namespace Teste.Repositories
 {
@@ -13,37 +15,36 @@ namespace Teste.Repositories
     {
         private readonly string strPath =string.Empty;
         ModelLine modelLine;
-        List<string> lRetorno;
-        private readonly Logger _logger;
+        private readonly ILogger _logger;
 
-        public RepositoryArquivo(Logger logger)
+        public RepositoryArquivo(ILogger logger)
         {
             strPath = ConfigurationManager.AppSettings.Get("Path");
             modelLine = new ModelLine();  
             _logger = logger;
         }
 
-        public async Task<List<string>> AsyncLerArquivo()
+        public ModelLine? AsyncLerArquivo()
         {
             try
             {
-                modelLine.ListA = new List<string>();
-                modelLine.ListB = new List<string>();
-
                 string[] arrFiles = Directory.GetFiles(strPath, "*.csv");
                 if (arrFiles.Length > 0)
                 {
+                    modelLine.ListA = new List<string>();
+                    modelLine.ListB = new List<string>();
+
                     var csvconfig = new CsvConfiguration(CultureInfo.CurrentCulture)
                     {
                         HasHeaderRecord = false,
                         Delimiter = ";",
                     };
 
-                    _logger.Info("inicio da leitura do(s) arquivo(s).");
+                    _logger.LogInformation("inicio da leitura do(s) arquivo(s).");
 
                     foreach (var sFile in arrFiles)
                     {
-                        _logger.Info(string.Format("leitura do arquivo: {0}", sFile));
+                        _logger.LogInformation(string.Format("leitura do arquivo: {0}", sFile));
                         using var streamReader = File.OpenText(sFile);
                         using var csvreader = new CsvReader(streamReader, csvconfig);
 
@@ -64,56 +65,22 @@ namespace Teste.Repositories
                         } 
                     }
 
-                    _logger.Info("fim da leitura do(s) arquivo(s).");
-                    _logger.Info("disparando as threads.");
+                    _logger.LogInformation("fim da leitura do(s) arquivo(s).");
+                    _logger.LogInformation("disparando as threads.");                 
 
-                    await Task.WhenAll(AsyncListA(), AsyncListB());
-
-                    return (await Task.FromResult(lRetorno));
+                    return modelLine;
                 } 
                 else
                 {
-                    _logger.Info("não há arquivo .csv no diretório.");
+                    _logger.LogInformation("não há arquivo .csv no diretório.");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Info(ex.Message);
+                _logger.LogInformation(ex.Message);
                 return null;
             }  
-        }
-
-        public Task AsyncListA()
-        {
-            if (modelLine.ListA.Count > 0)
-            {
-                if (lRetorno == null)
-                    lRetorno = new List<string>();
-
-                foreach (string s in modelLine.ListA)
-                {
-                    lRetorno.Add(s);
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public Task AsyncListB()
-        {
-            if (modelLine.ListB.Count > 0)
-            {
-                if (lRetorno == null)
-                    lRetorno = new List<string>();
-
-                foreach (string s in modelLine.ListB)
-                {
-                    lRetorno.Add(s);
-                }
-            }
-
-            return Task.CompletedTask;
         }
     }
 }

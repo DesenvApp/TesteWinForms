@@ -12,19 +12,19 @@ namespace WebTesteAPI.Controllers
     {
         public ArquivoRepository _ArquivoRepository;
 
-        private readonly Logger _logger;
+        private readonly ILogger<ArquivoController> _logger;
 
-        public ArquivoController(Logger logger)
+        public ArquivoController(ILogger<ArquivoController> logger)
         {            
             _logger = logger;
-            _logger.Info("Inicializa a controller(ArquivoController)");
+            _logger.LogInformation("Inicializa a controller(ArquivoController)");
             _ArquivoRepository = new ArquivoRepository(_logger);
         }
          
         [HttpGet("GeraArquivoResultado")]      
         public string GeraArquivoResultado(string linhas)
         {
-            _logger.Info("entrou no metodo GeraArquivoResultado");
+            _logger.LogInformation("entrou no metodo GeraArquivoResultado");
             List<string> Lista = JsonConvert.DeserializeObject<List<string>>(linhas);
 
             return _ArquivoRepository.CalculaLista(Lista);

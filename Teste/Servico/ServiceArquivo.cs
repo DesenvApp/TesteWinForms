@@ -1,23 +1,25 @@
 ﻿using Teste.Interface;
 using Teste.Repositories;
-using NLog;
+using Teste.Models;
+using Microsoft.Extensions.Logging;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Teste.Servico
 {
     public class ServiceArquivo
     {
         private readonly IRepositoryArquivo _repositoryArquivo;
-        private readonly Logger _logger;
+        private ILogger _logger;
 
-        public ServiceArquivo(Logger logger)
+        public ServiceArquivo(ILogger logger)
         {            
             _logger = logger;
             _repositoryArquivo = new RepositoryArquivo(_logger);
-        }
+        }   
 
-        public async Task<List<string>> Execute()
+        public Task<ModelLine> Execute()
         {
-           return (await _repositoryArquivo.AsyncLerArquivo());
+           return Task.FromResult(_repositoryArquivo.AsyncLerArquivo());
         }
 
     }

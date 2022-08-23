@@ -4,6 +4,6 @@ namespace Teste.Interface
 {
     public interface IRepositoryArquivo
     {
-        Task<List<string>> AsyncLerArquivo();
+        ModelLine AsyncLerArquivo();
     }
 }

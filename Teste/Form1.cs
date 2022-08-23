@@ -1,29 +1,29 @@
-using Newtonsoft.Json;
-using NLog;
 using System.Configuration;
 using Teste.Servico;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
+using Teste.Models;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Newtonsoft.Json;
 
 namespace Teste
 {
     public partial class Form1 : Form
     {
-        readonly Logger _logger;
-        List<string> lista = null;
+        private readonly ILogger _logger;
+        ModelLine _ModelLine;
 
         public delegate void AddItemDelegate(ListViewItem item);        
 
-        public Form1()
+        public Form1(ILogger<Form1> logger)
         {
-            InitializeComponent();
-            _logger = LogManager.GetLogger("");
+            _logger = logger;
+            InitializeComponent();            
             Control.CheckForIllegalCrossThreadCalls = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {          
-            _logger.Info("Disparando a thread");          
+            _logger.LogInformation("Disparando a thread Monitora(monitora a pasta).");          
             var threadMonitora = new Thread(Monitora);
             threadMonitora.Start();
         }
@@ -38,49 +38,63 @@ namespace Teste
             else
             {
                 var d = new AddItemDelegate(AddItem);
-                 listView1.Invoke(d);
+                 listView1.Invoke(d, new object[] { item });
             }
         }
 
-        public void Monitora()
+        public async void Monitora()
         {
             try
             {
                 ServiceArquivo _ServiceArquivo = new ServiceArquivo(_logger);
-                lista = _ServiceArquivo.Execute().Result;
+                _ModelLine = _ServiceArquivo.Execute().Result;
 
-                if (lista !=null && lista.Count > 0)
+                if (_ModelLine != null)
                 {
-                    listView1.View = View.Details;
-                    _logger.Info("Adicionando items na listview.");
+                    _logger.LogInformation("disparando as threads de da coluna A e B.");
+                    var task1 = Task.Run(() => AddItemDaLista(_ModelLine.ListA));
+                    var task2 = Task.Run(() => AddItemDaLista(_ModelLine.ListB));
 
-                    foreach (string s in lista)
-                    {
-                        ListViewItem item = new ListViewItem();
-                        item.Text = s;
-                        //listView1.Items.Add(item);
-                        AddItem(item);
-                    }   
+                    await Task.WhenAll(task1, task2);
                 }
-                else
-                {
-                    _logger.Info("Lista vazia.");
-                }
- 
             }
             catch (Exception ex)
             {
-                _logger.Info(ex.Message);
+                _logger.LogError(ex.Message);
             }
         } 
 
+        public void AddItemDaLista(List<string> lista)
+        {
+            if (lista != null && lista.Count > 0)
+            {
+                listView1.View = View.Details;
+                _logger.LogInformation("Adicionando items na listview.");
+
+                foreach (string s in lista)
+                {
+                    ListViewItem item = new ListViewItem();
+                    item.Text = s; 
+                    AddItem(item);
+                }
+            }
+        }  
+
         private async void listView1_DoubleClick(object sender, EventArgs e)
         {
+            List<string> lista;
             try
             {
-                if (lista != null && lista.Count > 0)
+                if (listView1.Items.Count > 0)
                 {
-                    _logger.Info("envio do arquivo para a API.");
+                    lista = new List<string>();
+
+                    foreach (ListViewItem item in listView1.Items)
+                    {
+                        lista.Add(item.Text);
+                    }
+
+                    _logger.LogInformation("envio do arquivo para a API.");
 
                     string UrlAPI = ConfigurationManager.AppSettings.Get("UrlAPI");
 
@@ -96,16 +110,16 @@ namespace Teste
                         {
                             if (response.IsSuccessStatusCode)
                             {
-                                _logger.Info("retorno de sucesso da API.");
+                                _logger.LogInformation("retorno de sucesso da API.");
                                 MessageBox.Show(await response.Content.ReadAsStringAsync());
-                            }    
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Info(ex.Message);
+                _logger.LogError(ex.Message);
             }
  
         }
